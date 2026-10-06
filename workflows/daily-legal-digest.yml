@@ -1,1 +1,44 @@
+name: Daily Legal Risk Digest
 
+on:
+  schedule:
+    # Каждый день в 06:00 UTC = 09:00 МСК
+    - cron: '0 6 * * *'
+  workflow_dispatch:  # ручной запуск для теста
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install feedparser openai
+
+      - name: Run agent
+        env:
+          YANDEX_API_KEY: ${{ secrets.YANDEX_API_KEY }}
+          YANDEX_FOLDER_ID: ${{ secrets.YANDEX_FOLDER_ID }}
+        run: python agent/legal_agent.py
+
+      - name: Send email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.yandex.ru
+          server_port: 465
+          secure: true
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "⚖️ Ежедневный мониторинг юридических рисков"
+          to: ${{ secrets.EMAIL_RECIPIENTS }}
+          from: Legal Risk Agent
+          html_body: file://digest.html
+          nodemailerlog: true
+          nodemailerdebug: true
