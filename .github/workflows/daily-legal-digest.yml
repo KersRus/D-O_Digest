@@ -28,7 +28,19 @@ jobs:
           YANDEX_FOLDER_ID: ${{ secrets.YANDEX_FOLDER_ID }}
         run: python agent/legal_agent.py
 
+      - name: Check digest exists
+        id: check
+        run: |
+          if [ -f digest.html ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "[INFO] digest.html найден, размер: $(wc -c < digest.html) байт"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "[INFO] digest.html отсутствует — новостей нет, письмо не отправляем"
+          fi
+
       - name: Send email
+        if: steps.check.outputs.exists == 'true'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.yandex.ru
