@@ -213,12 +213,10 @@ CATEGORY_ORDER = {
 }
 
 def build_digest(classified):
-    today = datetime.now().strftime("%d.%m.%Y")
-
     if not classified:
-        return (f"<h2>⚖️ Мониторинг юридических рисков — {today}</h2>"
-                f"<p>Новости о вовлечении директоров или акционеров "
-                f"к разбирательствам отсутствуют.</p>")
+        return None
+
+    today = datetime.now().strftime("%d.%m.%Y")
 
     classified.sort(key=lambda x: (
         CATEGORY_ORDER.get(x.get("category", "other"), 99),
@@ -269,13 +267,10 @@ def main():
     classified = classify_news(news)
     digest_html = build_digest(classified)
 
+    if digest_html is None:
+        print("[INFO] Новостей нет — письмо не будет отправлено")
+        return
+
     with open("digest.html", "w", encoding="utf-8") as f:
         f.write(digest_html)
-
-    if classified:
-        print(f"[INFO] Дайджест сформирован: {len(classified)} записей")
-    else:
-        print("[INFO] Новостей нет — отправляем уведомление")
-
-if __name__ == "__main__":
-    main()
+    print(f"[INFO] Дайджест сформирован: {len(classified)} записей")
